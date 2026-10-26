@@ -1,0 +1,93 @@
+<section class="settings-page">
+  <header class="settings-heading">
+    <div>
+      <p class="eyebrow">Workspace</p>
+      <h1>Family settings</h1>
+      <p class="muted">Manage access for {{ auth.currentFamily?.name }}.</p>
+    </div>
+    <span class="family-mark">
+      @if (auth.currentFamily?.logoDataUrl) {
+        <img class="family-logo-image" [src]="auth.currentFamily?.logoDataUrl" alt="" />
+      } @else {
+        {{ auth.currentFamily?.name?.charAt(0)?.toUpperCase() || 'F' }}
+      }
+    </span>
+  </header>
+
+  <div class="settings-summary">
+    <article class="summary-tile">
+      <span>Family members</span>
+      <strong>{{ auth.currentFamily?.members?.length ?? 0 }}</strong>
+    </article>
+    <article class="summary-tile admin-tile">
+      <span>Family administrator</span>
+      @for (admin of adminMembers; track admin.id) {
+        <strong>{{ admin.name }}</strong>
+        <small>{{ admin.email }}</small>
+      }
+    </article>
+  </div>
+
+  <section class="settings-panel family-logo-panel">
+    <div class="logo-preview" [class.has-logo]="!!auth.currentFamily?.logoDataUrl">
+      @if (auth.currentFamily?.logoDataUrl) {
+        <img [src]="auth.currentFamily?.logoDataUrl" alt="Current family logo preview" />
+      } @else {
+        <div class="logo-placeholder">
+          <strong>{{ auth.currentFamily?.name?.charAt(0)?.toUpperCase() || 'F' }}</strong>
+          <span>Initial mark</span>
+        </div>
+      }
+    </div>
+    <div class="logo-copy">
+      <span class="logo-kicker">Family identity</span>
+      <h2>{{ auth.currentFamily?.name }} logo</h2>
+      <p>Shown in the family header, profile, and navigation. The family initial appears whenever no logo is uploaded.</p>
+      @if (auth.isAdmin) {
+        <div class="logo-actions">
+          <label class="upload-logo">
+            <span class="material-symbols-outlined" aria-hidden="true">upload</span>
+            {{ auth.currentFamily?.logoDataUrl ? 'Replace logo' : 'Upload logo' }}
+            <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onLogoSelected($event)" />
+          </label>
+          @if (auth.currentFamily?.logoDataUrl) {
+            <button type="button" class="remove-logo" (click)="removeLogo()">
+              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              Remove
+            </button>
+          }
+          <small>PNG, JPEG, or WebP · up to 1 MB</small>
+        </div>
+      }
+    </div>
+  </section>
+
+  @if (notice) { <p class="settings-notice" role="status">{{ notice }}</p> }
+  @if (error) { <p class="settings-error" role="alert">{{ error }}</p> }
+
+  <section class="settings-panel">
+    <header class="members-heading">
+      <div>
+        <h2>Members</h2>
+        <p>Each person signs in with their own credentials and shares this family’s PPF workspace.</p>
+      </div>
+      <span class="member-count">{{ auth.currentFamily?.members?.length ?? 0 }} total</span>
+    </header>
+
+    @for (member of auth.currentFamily?.members ?? []; track member.id) {
+      <article class="settings-member-row">
+        <div class="member-avatar">{{ member.name.charAt(0).toUpperCase() }}</div>
+        <div class="member-details">
+          <strong>{{ member.name }}</strong>
+          <small>{{ member.email }}</small>
+        </div>
+        <span class="role-badge" [class.admin-role]="member.role === 'admin'">{{ member.role }}</span>
+        @if (auth.isAdmin && member.role === 'member') {
+          <button type="button" class="remove-member" (click)="removeMember(member.id, member.name)">Remove</button>
+        }
+      </article>
+    } @empty {
+      <p class="empty-members">No family members have been added.</p>
+    }
+  </section>
+</section>

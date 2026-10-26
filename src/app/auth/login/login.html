@@ -1,0 +1,42 @@
+<main class="auth-page">
+  @if (!ready()) {
+    <div class="auth-loading" aria-label="Loading family account"></div>
+  } @else {
+    <section class="auth-layout">
+      <div class="auth-intro">
+        <div class="galaxy-scene" aria-hidden="true"><div class="star-layer star-layer-back"></div><div class="star-layer star-layer-front"></div><div class="nebula nebula-main"></div><div class="nebula nebula-accent"></div><div class="galaxy-orbit orbit-one"><span></span></div><div class="galaxy-orbit orbit-two"><span></span></div><div class="galaxy-core"></div></div>
+        <div class="auth-brand"><span class="brand-mark">F</span><span>Saving Manager</span></div>
+        <div class="intro-copy"><p class="eyebrow">One family workspace</p><h1>Build your savings picture, together.</h1><p>Family members sign in individually. PPF accounts and records stay inside your shared family workspace.</p></div>
+        <div class="intro-bottom"><span class="intro-dot"></span><span>Private family workspace</span></div>
+      </div>
+      <div class="auth-form-area"><div class="auth-form-wrap">
+        @if (mode === 'forgot-password') {
+          <p class="eyebrow">Account recovery</p><h2>Reset your password</h2><p class="form-description">Enter your account email to continue.</p>
+          @if (errorMessage) { <p class="form-error" role="alert">{{ errorMessage }}</p> }
+          <form (ngSubmit)="requestPasswordReset()" #resetForm="ngForm"><label><span>Email address</span><input name="email" type="email" [(ngModel)]="email" autocomplete="email" required /></label><button class="submit-button" type="submit" [disabled]="resetForm.invalid || isSubmitting">Continue</button></form>
+          <button class="mode-switch" type="button" (click)="setMode('signin')">Back to sign in</button>
+        } @else if (mode === 'reset-password') {
+          <p class="eyebrow">Account recovery</p><h2>Choose a new password</h2><p class="form-description">Set a new password for your local demo account.</p>
+          @if (errorMessage) { <p class="form-error" role="alert">{{ errorMessage }}</p> }
+          <form (ngSubmit)="completePasswordReset()" #newPasswordForm="ngForm"><label><span>New password</span><input name="password" type="password" [(ngModel)]="password" minlength="8" required /></label><label><span>Confirm new password</span><input name="confirmPassword" type="password" [(ngModel)]="confirmPassword" minlength="8" required /></label><button class="submit-button" type="submit" [disabled]="newPasswordForm.invalid || isSubmitting">Update password</button></form>
+        } @else {
+          <p class="eyebrow">{{ mode === 'create-family' ? 'Get started' : 'Welcome back' }}</p>
+          <h2>{{ mode === 'create-family' ? 'Create your family account' : 'Sign in to Saving Manager' }}</h2>
+          <p class="form-description">{{ mode === 'create-family' ? 'Create a shared workspace with your email and password.' : 'Sign in with the email and password you created.' }}</p>
+          @if (errorMessage) { <p class="form-error" role="alert">{{ errorMessage }}</p> }
+          @if (noticeMessage) { <p class="form-notice" role="status">{{ noticeMessage }}</p> }
+          <form class="email-auth-form" (ngSubmit)="continueWithEmail()" #emailForm="ngForm">
+            @if (mode === 'create-family') { <div class="family-draft-fields"><label><span>Family or workspace name</span><input name="familyName" [(ngModel)]="familyName" required /></label><label><span>Your name</span><input name="adminName" [(ngModel)]="adminName" autocomplete="name" required /></label></div> }
+            <label><span>Email address</span><input name="email" type="email" [(ngModel)]="email" autocomplete="email" required /></label>
+            <label><span>Password</span><input name="password" type="password" [(ngModel)]="password" autocomplete="current-password" minlength="8" required /></label>
+            <button class="submit-button" type="submit" [disabled]="emailForm.invalid || isSubmitting">{{ mode === 'create-family' ? 'Create account' : 'Sign in' }}</button>
+          </form>
+          @if (mode === 'signin') { <button class="forgot-password-link" type="button" (click)="setMode('forgot-password')">Forgot password?</button> }
+          <button class="mode-switch" type="button" (click)="setMode(mode === 'signin' ? 'create-family' : 'signin')">{{ mode === 'signin' ? 'Create a new family workspace' : 'Already have a family workspace? Sign in' }}</button>
+          <p class="prototype-note">Frontend-only demo: accounts and family data are stored in this browser.</p>
+        }
+      </div></div>
+    </section>
+    @if (isEntering) { <section class="entry-transition" role="status"><div class="entry-space" aria-hidden="true"><div class="entry-stars entry-stars-far"></div><div class="entry-stars entry-stars-near"></div><div class="entry-warp-ring ring-a"></div><div class="entry-warp-ring ring-b"></div><div class="entry-warp-ring ring-c"></div><div class="entry-core"></div></div><div class="entry-copy"><span class="entry-brand-mark">F</span><strong>Saving Manager</strong><p>Entering {{ auth.currentFamily?.name }}</p><span class="entry-progress"><span></span></span></div></section> }
+  }
+</main>

@@ -1,0 +1,157 @@
+
+<section class="dashboard">
+  @if (accountLoadError) {
+    <p class="dashboard-error" role="alert">{{ accountLoadError }}</p>
+  }
+  <header class="welcome">
+    <div>
+      <p class="eyebrow">Family savings</p>
+      <h1>PPF Portfolio Overview</h1>
+      <p>Deposits and returns across every account holder.</p>
+    </div>
+    <span>{{ todayLabel }}</span>
+  </header>
+
+  <div class="summary-grid">
+    <article class="summary-card deposits-card">
+      <span class="card-icon">₹</span>
+      <p>Total deposits</p>
+      <h2>{{ totalDeposits | currency:'INR':'symbol':'1.0-0' }}</h2>
+      <small>Across {{ accounts.length }} PPF accounts</small>
+    </article>
+    <article class="summary-card profit-card">
+      <span class="card-icon">↗</span>
+      <p>Total profit</p>
+      <h2>{{ totalProfit | currency:'INR':'symbol':'1.0-0' }}</h2>
+      <small>Interest earned across accounts</small>
+    </article>
+    <article class="summary-card value-card">
+      <span class="card-icon">Σ</span>
+      <p>Portfolio value</p>
+      <h2>{{ totalPortfolioValue | currency:'INR':'symbol':'1.0-0' }}</h2>
+      <small>Deposits plus recorded interest</small>
+    </article>
+    <article class="summary-card accounts-card">
+      <span class="card-icon">◎</span>
+      <p>Account holders</p>
+      <h2>{{ accounts.length }}</h2>
+      <small>Active PPF accounts</small>
+    </article>
+  </div>
+
+  @if (accounts.length > 0) {
+  <div class="charts-grid">
+    <article class="panel comparison-panel">
+      <header class="panel-heading">
+        <div>
+          <h2>Deposits &amp; profit by account holder</h2>
+          <p class="muted">Compare contributions with recorded interest</p>
+        </div>
+        <span class="chart-period">All accounts</span>
+      </header>
+      <div class="comparison-chart">
+        <canvas #accountComparisonChart aria-label="Deposits and profit by PPF account holder"></canvas>
+      </div>
+    </article>
+
+    <article class="panel ratio-panel">
+      <header class="panel-heading">
+        <div>
+          <h2>Portfolio deposit-to-profit ratio</h2>
+          <p class="muted">Total contribution and interest share</p>
+        </div>
+      </header>
+      <div class="ratio-chart">
+        <canvas #portfolioRatioChart aria-label="Overall PPF deposits compared with profit"></canvas>
+        <div class="ratio-center">
+          <span>Portfolio</span>
+          <strong>{{ totalPortfolioValue | currency:'INR':'symbol':'1.0-0' }}</strong>
+        </div>
+      </div>
+      <div class="ratio-legend">
+        <div><span class="legend-dot deposits-dot"></span><span>Deposits</span><strong>{{ totalDeposits | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+        <div><span class="legend-dot profit-dot"></span><span>Profit</span><strong>{{ totalProfit | currency:'INR':'symbol':'1.0-0' }}</strong></div>
+      </div>
+    </article>
+  </div>
+  } @else if (!accountLoadError) {
+    <section class="empty-portfolio">
+      <span class="empty-portfolio-mark">₹</span>
+      <div>
+        <h2>Your family portfolio is ready</h2>
+        <p>Add the first PPF account to start tracking shared deposits and returns.</p>
+      </div>
+      <a routerLink="/ppf">Open PPF accounts</a>
+    </section>
+  }
+
+  <section class="panel account-panel">
+    <header class="panel-heading">
+      <div>
+        <h2>PPF account holders</h2>
+        <p class="muted">Balances represented in the portfolio charts</p>
+      </div>
+      <span class="chart-period">{{ accounts.length }} accounts</span>
+    </header>
+    @for (account of accounts; track account.id) {
+      <article class="account-row">
+        <div class="account-identity">
+          <span class="account-avatar">{{ account.holderName.charAt(0) }}</span>
+          <div>
+            <strong>{{ account.holderName }}</strong>
+            <small>{{ account.accountNumber }}</small>
+          </div>
+        </div>
+        <div class="account-metric">
+          <span>Deposits</span>
+          <strong>{{ account.totalDeposit | currency:'INR':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div class="account-metric profit-metric">
+          <span>Profit</span>
+          <strong>{{ account.totalInterest | currency:'INR':'symbol':'1.0-0' }}</strong>
+        </div>
+      </article>
+    } @empty {
+      <p class="empty-state">No PPF accounts have been added yet.</p>
+    }
+  </section>
+
+  @if (auth.isAdmin) {
+    <section class="panel family-access-panel">
+      <header class="panel-heading">
+        <div>
+          <h2>Family access</h2>
+          <p class="muted">Create individual sign-ins for people in {{ auth.currentFamily?.name }}.</p>
+        </div>
+        <span class="chart-period">Admin</span>
+      </header>
+
+      <form class="member-form" (ngSubmit)="addFamilyMember()" #memberForm="ngForm">
+        <label>
+          <span>Member name</span>
+          <input name="memberName" [(ngModel)]="newMember.name" required />
+        </label>
+        <label>
+          <span>Member email address</span>
+          <input name="memberEmail" type="email" [(ngModel)]="newMember.email" />
+        </label>
+        <button type="submit" [disabled]="memberForm.invalid || !newMember.email">Add member</button>
+      </form>
+
+      @if (memberError) { <p class="form-message error" role="alert">{{ memberError }}</p> }
+      @if (memberNotice) { <p class="form-message success" role="status">{{ memberNotice }}</p> }
+
+      <div class="member-list">
+        @for (member of auth.currentFamily?.members ?? []; track member.id) {
+          <div class="member-row">
+            <div><strong>{{ member.name }}</strong><small>{{ member.email }}</small></div>
+            <span class="member-role">{{ member.role }}</span>
+            @if (member.role === 'member') {
+              <button type="button" class="remove-member-button" (click)="removeFamilyMember(member.id, member.name)">Remove</button>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+</section>

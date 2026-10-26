@@ -1,0 +1,389 @@
+<div class="ppf-dashboard-container">
+    @if (isLoadingAccounts) {
+        <div class="ppf-state" role="status">Loading family PPF accounts…</div>
+    } @else if (accountLoadError) {
+        <div class="ppf-state ppf-state-error" role="alert">{{ accountLoadError }}</div>
+    } @else if (accounts.length === 0) {
+        <section class="ppf-state ppf-empty-state">
+            <span class="empty-state-icon">₹</span>
+            <h1>No PPF accounts yet</h1>
+            <p>PPF accounts added here will be shared with the signed-in family.</p>
+            @if (canManagePpf) {
+                <button mat-flat-button class="btn-green" (click)="openAddAccountModal()">Add the first account</button>
+            } @else {
+                <p>Ask your family admin to add the first account.</p>
+            }
+        </section>
+    } @else {
+    <div class="ppf-wrapper">
+
+        <!-- Redesigned Modern Header & Summary Section -->
+        <div class="modern-dashboard-header">
+
+            <!-- Main Unified Top Bar -->
+            <div class="top-unified-bar">
+                <!-- Brand & Title -->
+                <div class="brand-section">
+                    <div class="brand-icon">₹</div>
+                    <div class="brand-title">
+                        <h1>Public Provident Fund Dashboard</h1>
+                        <p>Track compound growth, deposits, and financial milestones</p>
+                        <div class="active-account-number">
+                            <span>Account number</span>
+                            <strong>{{ activeAccount.accountNumber }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Actions & Switcher Group -->
+                <div class="account-actions-group">
+                    <!-- + Add Account Button (Styled Green) -->
+                    <button *ngIf="canManagePpf" mat-flat-button (click)="openAddAccountModal()" class="btn-green">
+                        + Add Account
+                    </button>
+
+                    <!-- Account Switcher Dropdown -->
+                    <mat-form-field appearance="outline" class="custom-mat-select">
+                        <mat-label>Switch Account</mat-label>
+                        <mat-select panelClass="ppf-green-select-panel" [value]="selectedAccountId" (selectionChange)="onAccountChange($event)">
+                            <mat-select-trigger>
+                                    <span class="account-trigger">
+                                        <strong>{{ activeAccount.holderName }}</strong>
+                                        <small>{{ activeAccount.accountNumber }}</small>
+                                    </span>
+                            </mat-select-trigger>
+                            <mat-option *ngFor="let acc of accounts" [value]="acc.id">
+                                <span class="account-option">
+                                    <strong>{{ acc.holderName }}</strong>
+                                    <small>{{ acc.accountNumber }}</small>
+                                </span>
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Modern Metric Cards Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card-modern">
+                    <div class="card-glow-circle emerald"></div>
+                    <div class="card-header-row">
+                        <span class="card-title">Total Deposit</span>
+                        <div class="card-icon-box emerald">₹</div>
+                    </div>
+                    <div class="card-body-content">
+                        <h3 class="card-amount">₹{{ activeAccount.totalDeposit | number:'1.0-0' }}</h3>
+                        <p class="card-subtitle emerald">Principal Amount Invested</p>
+                    </div>
+                </div>
+
+                <div class="metric-card-modern">
+                    <div class="card-glow-circle blue"></div>
+                    <div class="card-header-row">
+                        <span class="card-title">Total Interest</span>
+                        <div class="card-icon-box blue">%</div>
+                    </div>
+                    <div class="card-body-content">
+                        <h3 class="card-amount">₹{{ activeAccount.totalInterest | number:'1.0-0' }}</h3>
+                        <p class="card-subtitle blue">Compounded Earnings</p>
+                    </div>
+                </div>
+
+                <div class="metric-card-modern">
+                    <div class="card-glow-circle indigo"></div>
+                    <div class="card-header-row">
+                        <span class="card-title">Total Maturity Value</span>
+                        <div class="card-icon-box indigo">Σ</div>
+                    </div>
+                    <div class="card-body-content">
+                        <h3 class="card-amount">₹{{ activeAccount.totalValue | number:'1.0-0' }}</h3>
+                        <p class="card-subtitle indigo">Principal + Interest</p>
+                    </div>
+                </div>
+
+                <div class="metric-card-modern">
+                    <div class="card-glow-circle amber"></div>
+                    <div class="card-header-row">
+                        <span class="card-title">Time Period</span>
+                        <div class="card-icon-box amber">⏱</div>
+                    </div>
+                    <div class="card-body-content">
+                        <h3 class="card-amount">{{ activeAccount.tenureYears }} Years</h3>
+                        <p class="card-subtitle amber">Active Tenure Duration</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Responsive Charts Grid Section -->
+        <div class="charts-grid-container">
+            <!-- Growth Chart -->
+            <div class="ppf-chart-box">
+                <div class="chart-box-header">
+                    <div>
+                        <h3>Portfolio Growth Analytics</h3>
+                        <p>Comparison between Deposits and Total Balance</p>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="dot emerald"></span>Deposits</span>
+                        <span class="legend-item"><span class="dot blue"></span>Balance</span>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas #growthChart></canvas>
+                </div>
+            </div>
+
+            <!-- Ratio Chart -->
+            <div class="ppf-chart-box">
+                <div class="chart-box-header">
+                    <div>
+                        <h3>Deposit vs Interest Ratio</h3>
+                        <p>Breakdown of return share</p>
+                    </div>
+                </div>
+                <div class="chart-wrapper ratio-chart-wrapper">
+                    <canvas #ratioChart></canvas>
+                    <div class="ratio-chart-center">
+                        <span>Portfolio</span>
+                        <strong>₹{{ activeAccount.totalValue | number:'1.0-0' }}</strong>
+                    </div>
+                </div>
+                <div class="ratio-footer-grid">
+                    <div>
+                        <p class="ratio-label">Principal Share</p>
+                        <p class="ratio-value emerald">{{ ((activeAccount.totalDeposit / activeAccount.totalValue) *
+                            100) | number:'1.1-1' }}%</p>
+                    </div>
+                    <div>
+                        <p class="ratio-label">Interest Share</p>
+                        <p class="ratio-value blue">{{ ((activeAccount.totalInterest / activeAccount.totalValue) * 100)
+                            | number:'1.1-1' }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ledger Table Card (With + Add Deposit Button inside header) -->
+        <!-- Ledger Table Card -->
+        <div class="ppf-table-card">
+            <div class="table-header-row">
+                <div>
+                    <h3>Transaction & Interest Ledger</h3>
+                    <p>Monthly breakdowns and calculated compounding interest</p>
+                    <div class="ledger-account-number">
+                        <span>{{ activeAccount.holderName }}</span>
+                        <strong>{{ activeAccount.accountNumber }}</strong>
+                    </div>
+                </div>
+
+                <div class="table-filter-group">
+                    <button *ngIf="canManagePpf" mat-flat-button (click)="openAddModal()" class="btn-green">
+                        + Add Deposit
+                    </button>
+
+                    <mat-form-field appearance="outline" style="width: 150px; margin-bottom: -1.25em;">
+                        <mat-label>Filter Year</mat-label>
+                        <mat-select panelClass="ppf-green-select-panel" [(ngModel)]="selectedYear" (selectionChange)="updateDataSource()">
+                            <mat-option value="all">All Years</mat-option>
+                            <mat-option value="2023">2023</mat-option>
+                            <mat-option value="2024">2024</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Material Table View with Pagination -->
+            <div class="table-responsive">
+                <mat-table [dataSource]="dataSource" class="mat-elevation-z0 w-full fixed-layout-table">
+
+                    <ng-container matColumnDef="month">
+                        <mat-header-cell *matHeaderCellDef class="table-header-cell col-sm">MONTH</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-sm" style="font-weight: bold; color: #0f172a;">
+                            {{ tx.date | date:'MMM yyyy' }}
+                        </mat-cell>
+                    </ng-container>
+
+                    <ng-container matColumnDef="date">
+                        <mat-header-cell *matHeaderCellDef class="table-header-cell col-md">DATE</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-md" style="color: #475569;">{{ tx.date | date:'dd MMM
+                            yyyy' }}</mat-cell>
+                    </ng-container>
+
+                    <ng-container matColumnDef="amount">
+                        <mat-header-cell *matHeaderCellDef
+                            class="table-header-cell col-md justify-end">AMOUNT</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-md justify-end">
+                            <div class="amount-cell">
+                                <ng-container *ngIf="editingTransaction === tx; else amountDisplay">
+                                    <input
+                                        class="amount-edit-input"
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        aria-label="Edit deposit amount"
+                                        [(ngModel)]="editAmountValue"
+                                        (ngModelChange)="amountEditError = ''"
+                                        [ngModelOptions]="{ standalone: true }" />
+                                    <button type="button" class="amount-action save" aria-label="Save amount" (click)="saveAmountEdit(tx)">
+                                        <mat-icon>check</mat-icon>
+                                    </button>
+                                    <button type="button" class="amount-action" aria-label="Cancel amount edit" (click)="cancelAmountEdit()">
+                                        <mat-icon>close</mat-icon>
+                                    </button>
+                                    <small *ngIf="amountEditError" class="amount-edit-error">{{ amountEditError }}</small>
+                                </ng-container>
+                                <ng-template #amountDisplay>
+                                    <strong>₹{{ tx.amount | number:'1.0-0' }}</strong>
+                                    <button *ngIf="canManagePpf" type="button" class="amount-action" aria-label="Edit deposit amount" (click)="startAmountEdit(tx)">
+                                        <mat-icon>edit</mat-icon>
+                                    </button>
+                                </ng-template>
+                            </div>
+                        </mat-cell>
+                    </ng-container>
+
+                    <ng-container matColumnDef="interestRate">
+                        <mat-header-cell *matHeaderCellDef class="table-header-cell col-lg justify-center">INTEREST RATE
+                            (%)</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-lg justify-center">
+                            <span class="rate-badge">{{ tx.interestRate }}%</span>
+                        </mat-cell>
+                    </ng-container>
+
+                    <ng-container matColumnDef="minBalance">
+                        <mat-header-cell *matHeaderCellDef
+                            class="table-header-cell col-md justify-end">MIN-AMT</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-md justify-end" style="color: #475569;">₹{{
+                            tx.minBalance | number:'1.0-0' }}</mat-cell>
+                    </ng-container>
+
+                    <ng-container matColumnDef="monthlyInterest">
+                        <mat-header-cell *matHeaderCellDef class="table-header-cell col-lg justify-end">INTEREST
+                            (MONTH)</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-lg justify-end"
+                            style="color: #059669; font-weight: 500;">₹{{ tx.monthlyInterest | number:'1.0-0'
+                            }}</mat-cell>
+                    </ng-container>
+
+                    <ng-container matColumnDef="yearlyInterest">
+                        <mat-header-cell *matHeaderCellDef class="table-header-cell col-lg justify-end">INTEREST
+                            (YEAR)</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-lg justify-end"
+                            style="font-weight: bold; color: #2563eb;">
+                            <span *ngIf="tx.yearlyInterest">₹{{ tx.yearlyInterest | number:'1.0-0' }}</span>
+                        </mat-cell>
+                    </ng-container>
+
+                    <ng-container matColumnDef="balance">
+                        <mat-header-cell *matHeaderCellDef
+                            class="table-header-cell col-md justify-end">BALANCE</mat-header-cell>
+                        <mat-cell *matCellDef="let tx" class="col-md justify-end"
+                            style="font-weight: 900; color: #0f172a;">₹{{ tx.balance | number:'1.0-0' }}</mat-cell>
+                    </ng-container>
+
+                    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+                    <mat-row *matRowDef="let row; columns: displayedColumns;" style="transition: background 0.2s;"
+                        class="hover:bg-slate-50"></mat-row>
+                </mat-table>
+            </div>
+
+            <!-- Angular Material Paginator -->
+            <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator>
+        </div>
+
+    </div>
+    }
+</div>
+<!-- Modal: Add Deposit -->
+<div *ngIf="isAddModalOpen" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Deposit Entry</h3>
+            <button (click)="closeAddModal()" class="close-btn">✕</button>
+        </div>
+
+        <form (ngSubmit)="addDeposit()" class="form-group-spacing">
+
+            <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>DEPOSIT DATE</mat-label>
+                <input
+                    matInput
+                    [matDatepicker]="picker"
+                    [min]="minimumDepositDate"
+                    [max]="maximumDepositDate"
+                    [matDatepickerFilter]="isDepositDateAllowed"
+                    [(ngModel)]="newTx.date"
+                    (dateInput)="depositDateError = ''"
+                    name="date"
+                    required />
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-error *ngIf="depositDateError">{{ depositDateError }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>AMOUNT (₹)</mat-label>
+                <input matInput type="number" [(ngModel)]="newTx.amount" name="amount" required />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>INTEREST RATE (%)</mat-label>
+                <input matInput type="number" step="0.1" [(ngModel)]="newTx.interestRate" name="interestRate"
+                    required />
+            </mat-form-field>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem;">
+                <button mat-button type="button" (click)="closeAddModal()">Cancel</button>
+                <button mat-flat-button type="submit" class="btn-green">Save Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Modal: Add New PPF Account -->
+<div *ngIf="isAddAccountModalOpen" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create New PPF Account</h3>
+            <button (click)="closeAddAccountModal()" class="close-btn">✕</button>
+        </div>
+
+        <form (ngSubmit)="addNewAccount()" class="form-group-spacing">
+
+            <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>ACCOUNT NUMBER</mat-label>
+                <input
+                    matInput
+                    [(ngModel)]="newAccount.accountNumber"
+                    (ngModelChange)="accountNumberError = ''"
+                    name="accountNumber"
+                    autocomplete="off"
+                    required />
+                <mat-error *ngIf="accountNumberError">{{ accountNumberError }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>ACCOUNT HOLDER NAME</mat-label>
+                <input matInput [(ngModel)]="newAccount.holderName" name="holderName" placeholder="e.g. Ananya Roy"
+                    required />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>BANK / INSTITUTION NAME</mat-label>
+                <input matInput [(ngModel)]="newAccount.bankName" name="bankName" placeholder="e.g. HDFC Bank, SBI"
+                    required />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>TENURE (YEARS)</mat-label>
+                <input matInput type="number" [(ngModel)]="newAccount.tenureYears" name="tenureYears" required />
+            </mat-form-field>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem;">
+                <button mat-button type="button" (click)="closeAddAccountModal()">Cancel</button>
+                <button mat-flat-button type="submit" class="btn-green">Create Account</button>
+            </div>
+        </form>
+    </div>
+</div>

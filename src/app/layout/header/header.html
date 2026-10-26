@@ -1,0 +1,54 @@
+
+<header class="app-header">
+  <button
+    type="button"
+    class="menu-toggle"
+    aria-label="Toggle navigation menu"
+    aria-controls="mobile-navigation"
+    [attr.aria-expanded]="mobileMenuOpen"
+    (click)="menuToggle.emit()">
+    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+  </button>
+
+  <div class="mobile-brand">
+    <span class="brand-icon">
+      @if (auth.currentFamily?.logoDataUrl) {
+        <img class="family-logo-image" [src]="auth.currentFamily?.logoDataUrl" alt="" />
+      } @else {
+        {{ familyInitial }}
+      }
+    </span>
+    <span>{{ auth.currentFamily?.name }}</span>
+  </div>
+
+  <div class="header-actions">
+    <span class="today">{{ today | date:'dd MMM yyyy' }}</span>
+
+    <details #profileMenu class="profile-menu">
+      <summary class="profile" aria-label="Open profile menu">
+        <div class="avatar">
+          @if (auth.currentFamily?.logoDataUrl) {
+            <img class="family-logo-image" [src]="auth.currentFamily?.logoDataUrl" alt="" />
+          } @else {
+            {{ familyInitial }}
+          }
+        </div>
+        <div class="profile-info">
+          <strong>{{ auth.currentFamily?.name }}</strong>
+          <small>{{ auth.currentMember?.name }} · {{ auth.currentMember?.role }}</small>
+        </div>
+        <span class="material-symbols-outlined profile-chevron" aria-hidden="true">expand_more</span>
+      </summary>
+      <div class="profile-dropdown">
+        <span class="profile-caption">Signed in as</span>
+        <strong>{{ auth.currentMember?.name }}</strong>
+        <small>{{ auth.currentMember?.email }}</small>
+        <span class="profile-role">{{ auth.currentMember?.role }}</span>
+        <button type="button" class="profile-signout" (click)="signOut()">
+          <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+          Sign out
+        </button>
+      </div>
+    </details>
+  </div>
+</header>

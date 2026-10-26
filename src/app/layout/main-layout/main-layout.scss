@@ -1,0 +1,45 @@
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f8fa;
+}
+
+app-sidebar {
+  display: block;
+  flex: 0 0 250px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  z-index: 20;
+}
+
+.main-area {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.page-content {
+  flex: 1;
+  padding: 24px;
+  overflow-x: auto;
+}
+
+@media (max-width: 1024px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  app-sidebar {
+    position: static;
+    flex: none;
+    height: 0;
+  }
+
+  .page-content {
+    padding: 16px;
+  }
+}
