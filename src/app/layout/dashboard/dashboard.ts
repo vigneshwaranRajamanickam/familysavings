@@ -21,7 +21,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   readonly auth = inject(FamilyAuthService);
   accounts: PPFAccount[] = [];
   accountLoadError = '';
-  newMember = { name: '', email: '', phone: '' };
+  newMember = { name: '', email: '', phone: '', temporaryPassword: '' };
   memberError = '';
   memberNotice = '';
 
@@ -76,9 +76,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.memberError = '';
     this.memberNotice = '';
     try {
-      await this.auth.addMember(this.newMember.name, this.newMember.email, this.newMember.phone);
-      this.newMember = { name: '', email: '', phone: '' };
-      this.memberNotice = 'Member added to this frontend-only family workspace.';
+      const memberAccount = await this.auth.addMember(this.newMember.name, this.newMember.email, this.newMember.phone, this.newMember.temporaryPassword);
+      this.newMember = { name: '', email: '', phone: '', temporaryPassword: '' };
+      this.memberNotice = `Member added. Login email: ${memberAccount.email} | Temporary password: ${memberAccount.temporaryPassword}`;
     } catch (error) {
       this.memberError = error instanceof Error ? error.message : 'Could not add this family member.';
     }

@@ -135,6 +135,10 @@
           <span>Member email address</span>
           <input name="memberEmail" type="email" [(ngModel)]="newMember.email" />
         </label>
+        <label>
+          <span>Temporary password</span>
+          <input name="temporaryPassword" type="text" [(ngModel)]="newMember.temporaryPassword" minlength="8" placeholder="Leave blank to generate" />
+        </label>
         <button type="submit" [disabled]="memberForm.invalid || !newMember.email">Add member</button>
       </form>
 

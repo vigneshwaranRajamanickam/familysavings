@@ -92,14 +92,23 @@ export class FamilyAuthService {
     this.activate(accounts[index]);
   }
 
-  async addMember(name: string, email: string, phone: string): Promise<void> {
+  async addMember(name: string, email: string, phone: string, requestedPassword = ''): Promise<{ email: string; temporaryPassword: string }> {
     if (!this.isAdmin || !this.currentFamily) throw new Error('Only the family admin can invite members.');
     const normalizedEmail = email.trim().toLowerCase() || null;
     const normalizedPhone = phone.trim() || null;
     if (!name.trim() || Number(!!normalizedEmail) + Number(!!normalizedPhone) !== 1) throw new Error('Enter the member name and exactly one email address or phone number.');
-    const family = { ...this.currentFamily, members: [...this.currentFamily.members, { id: this.id(), userId: '', familyId: this.currentFamily.id, name: name.trim(), email: normalizedEmail, phone: normalizedPhone, role: 'member' as const }] };
+    if (!normalizedEmail) throw new Error('Enter an email address so the member can sign in.');
+    if (this.accounts().some(account => account.user.email === normalizedEmail)) throw new Error('An account with this email already exists.');
+    const userId = this.id();
+    const memberId = this.id();
+    const temporaryPassword = requestedPassword.trim() || `Member@${Math.random().toString(36).slice(2, 10)}`;
+    if (temporaryPassword.length < 8) throw new Error('Temporary password must contain at least 8 characters.');
+    const account: Account = { user: { id: userId, email: normalizedEmail, phone: null }, password: temporaryPassword, familyId: this.currentFamily.id, memberId };
+    const family = { ...this.currentFamily, members: [...this.currentFamily.members, { id: memberId, userId, familyId: this.currentFamily.id, name: name.trim(), email: normalizedEmail, phone: null, role: 'member' as const }] };
+    this.saveAccounts([...this.accounts(), account]);
     this.saveFamily(family);
     this.state.update(value => ({ ...value, family }));
+    return { email: normalizedEmail, temporaryPassword };
   }
 
   async removeMember(id: string): Promise<void> {
